@@ -52,8 +52,6 @@ fn main() {
                 for y in 0..column.len(){
                     let adjacent = count_adjacent(board_state.clone(), x as i32, y as i32);
 
-                    if board_state[x][y] == true {println!("{}", adjacent);}
-
                     if board_state[x][y] == true && adjacent < 2 {
                         board[x][y] = false;
                     }
