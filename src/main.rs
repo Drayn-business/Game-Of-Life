@@ -2,13 +2,25 @@ use std::time::Duration;
 
 use sdl2::{pixels::Color, event::Event, keyboard::Keycode, rect::Rect, mouse::MouseButton};
 
+#[derive(Clone)]
+struct Cell {
+    alive: bool
+}
+
+impl Cell {
+    fn new(alive: bool) -> Cell {
+        return Cell {alive};
+    }
+}
+
 fn main() {
     let window_width: u32 = 1600;
     let window_height: u32 = 900;
 
-    let tile_size: u32 = 25;
-    let mut board: Vec<Vec<bool>> = vec![vec![false; (window_height / tile_size) as usize]; (window_width / tile_size) as usize];
+    let tile_size: u32 = 20;
+    let mut board: Vec<Vec<Cell>> = vec![vec![Cell::new(false); (window_height / tile_size) as usize]; (window_width / tile_size) as usize];
     let mut running = false;
+
     let mut frame_count = 0;
 
     let context = sdl2::init().unwrap();
@@ -39,30 +51,30 @@ fn main() {
 
                     let i = (x / tile_size as i32) as usize;
                     let j = (y / tile_size as i32) as usize;
-                    board[i][j] = !board[i][j];
+                    board[i][j].alive = !board[i][j].alive;
                 },
                 _ => {}
             }
         }
 
         //Mechanic
-        if running == true && frame_count % 2 == 0 {
+        if running == true && times_per_second(frame_count, 4) {
             let board_state = board.clone();
             for (x, column) in board_state.clone().iter().enumerate() {
                 for y in 0..column.len(){
                     let adjacent = count_adjacent(board_state.clone(), x as i32, y as i32);
 
-                    if board_state[x][y] == true && adjacent < 2 {
-                        board[x][y] = false;
+                    if board_state[x][y].alive == true && adjacent < 2 {
+                        board[x][y].alive = false;
                     }
-                    else if board_state[x][y] == true && (adjacent == 2 || adjacent == 3){
+                    else if board_state[x][y].alive == true && (adjacent == 2 || adjacent == 3){
                         continue;
                     }
-                    else if board_state[x][y] == true && adjacent > 2 {
-                        board[x][y] = false;
+                    else if board_state[x][y].alive == true && adjacent > 2 {
+                        board[x][y].alive = false;
                     }
-                    else if board_state[x][y] == false && adjacent == 3 {
-                        board[x][y] = true;
+                    else if board_state[x][y].alive == false && adjacent == 3 {
+                        board[x][y].alive = true;
                     }
                 }
             }
@@ -76,7 +88,7 @@ fn main() {
         canvas.set_draw_color(Color::RGB(200, 200, 200));
         for (x, column) in board.iter().enumerate() {
             for (y, tile) in column.iter().enumerate(){
-                if (*tile) == true {
+                if (*tile).alive == true {
                     canvas.fill_rect(
                         Rect::new((x as u32 * tile_size) as i32 + 2, (y as u32 * tile_size) as i32 + 2, tile_size - 4, tile_size - 4)
                     ).unwrap();
@@ -89,42 +101,46 @@ fn main() {
         if frame_count == 60 {frame_count = 0;}
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     }
+}
 
-    fn count_adjacent(board: Vec<Vec<bool>>, x: i32, y: i32) -> i32 {
-        let max_x = (board.len() - 1) as i32;
-        let max_y = (board[0].len() - 1) as i32;
-        let mut count: i32 = 0;
+fn count_adjacent(board: Vec<Vec<Cell>>, x: i32, y: i32) -> i32 {
+    let max_x = (board.len() - 1) as i32;
+    let max_y = (board[0].len() - 1) as i32;
+    let mut count: i32 = 0;
 
-        if y > 0 {
-            if x > 0 {
-                if board[x as usize - 1][y as usize - 1] == true {count += 1;}
-            }
-
-            if board[x as usize][y as usize - 1] == true {count += 1;}
-            
-            if x < max_x {
-                if board[x as usize + 1][y as usize - 1] == true {count += 1;}
-            }
-        }
-
+    if y > 0 {
         if x > 0 {
-            if board[x as usize - 1][y as usize] == true {count += 1;}
+            if board[x as usize - 1][y as usize - 1].alive == true {count += 1;}
         }
+
+        if board[x as usize][y as usize - 1].alive == true {count += 1;}
+        
         if x < max_x {
-            if board[x as usize + 1][y as usize] == true {count += 1;}
+            if board[x as usize + 1][y as usize - 1].alive == true {count += 1;}
         }
-
-        if y < max_y {
-            if x > 0 {
-                if board[x as usize - 1][y as usize + 1] == true {count += 1;}
-            }
-            if board[x as usize][y as usize + 1] == true {count += 1;}
-
-            if x < max_x {
-                if board[x as usize + 1][y as usize + 1] == true {count += 1;}
-            }
-        }
-
-        return count;
     }
+
+    if x > 0 {
+        if board[x as usize - 1][y as usize].alive == true {count += 1;}
+    }
+    if x < max_x {
+        if board[x as usize + 1][y as usize].alive == true {count += 1;}
+    }
+
+    if y < max_y {
+        if x > 0 {
+            if board[x as usize - 1][y as usize + 1].alive == true {count += 1;}
+        }
+        if board[x as usize][y as usize + 1].alive == true {count += 1;}
+
+        if x < max_x {
+            if board[x as usize + 1][y as usize + 1].alive == true {count += 1;}
+        }
+    }
+
+    return count;
+}
+
+fn times_per_second(frame_count: u32, times: u32) -> bool {
+    return frame_count % (60 / times) == 0;
 }
