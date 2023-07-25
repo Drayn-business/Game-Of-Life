@@ -5,10 +5,11 @@ use sdl2::{pixels::Color, event::Event, keyboard::Keycode, rect::Rect, mouse::Mo
 fn main() {
     let window_width: u32 = 1600;
     let window_height: u32 = 900;
-    let scope = (0..window_width as i32, 0..window_height as i32);
-
-    let tile_size: u32 = 20;
+    let mut scope = (0..window_width as i32, 0..window_height as i32);
+    
+    //replace with array
     let mut board: HashMap<(i32, i32), bool> = HashMap::new();
+    let tile_size: u32 = 20;
     let mut running = false;
 
     let mut frame_count: u32 = 0;
@@ -39,26 +40,39 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::R), .. } => {
                     board = HashMap::new();
                     running = false;
+                    scope = (0..window_width as i32, 0..window_height as i32);
                     frame_count = 0;
+                },
+                Event::KeyDown { keycode: Some(Keycode::W), .. } => {
+                    scope = (scope.0, (scope.1.start - tile_size as i32)..(scope.1.end - tile_size as i32));
+                },
+                Event::KeyDown { keycode: Some(Keycode::A), .. } => {
+                    scope = ((scope.0.start - tile_size as i32)..(scope.0.end - tile_size as i32), scope.1);
+                },
+                Event::KeyDown { keycode: Some(Keycode::S), .. } => {
+                    scope = (scope.0, (scope.1.start + tile_size as i32)..(scope.1.end + tile_size as i32));
+                },
+                Event::KeyDown { keycode: Some(Keycode::D), .. } => {
+                    scope = ((scope.0.start + tile_size as i32)..(scope.0.end + tile_size as i32), scope.1);
                 },
                 Event::MouseButtonDown { mouse_btn: MouseButton::Left, x, y, .. } => {
                     if running {continue;}
 
-                    let i = x / tile_size as i32;
-                    let j = y / tile_size as i32;
+                    let i = (x + scope.0.start) / tile_size as i32;
+                    let j = (y + scope.1.start) / tile_size as i32;
                     if board.get(&(i, j)).is_none() {
                         board.insert((i, j), true);
                     }
                     else {
                         board.remove(&(i, j));
                     }
-                },
+                }
                 _ => {}
             }
         }
 
         //Mechanic
-        if running && frames_per_second(frame_count, 2) {
+        if running && frames_per_second(frame_count, 10) {
             let board_state = board.clone();
             for ((x, y), _) in board_state.clone() {
                 for dr in -1..=1 {
@@ -82,22 +96,6 @@ fn main() {
                         }
                     }
                 }
-
-                //doesn't count for not existing cells
-                let adjacent = count_adjacent(board_state.clone(), x, y);
-
-                    if board_state.get(&(x, y)).is_some() && adjacent < 2 {
-                        board.remove(&(x, y));
-                    }
-                    else if board_state.get(&(x, y)).is_some() && ((2..=3).contains(&adjacent)){
-                        continue;
-                    }
-                    else if board_state.get(&(x, y)).is_some() && adjacent > 2 {
-                        board.remove(&(x, y));
-                    }
-                    else if board_state.get(&(x, y)).is_none() && adjacent == 3 {
-                        board.insert((x, y), true);
-                    }
             }
         }
 
@@ -107,15 +105,18 @@ fn main() {
 
         //Entities
         canvas.set_draw_color(Color::RGB(200, 200, 200));
-        let offset: u32 = 2;
+        let offset = 2;
         for ((x, y), _) in board.clone(){
-            if scope.0.contains(&x) && scope.1.contains(&y){
+            if scope.0.contains(&(x * tile_size as i32)) && scope.1.contains(&(y * tile_size as i32)){
+                let scope_offset_x: i32 = -scope.0.start;
+                let scope_offset_y: i32 = -scope.1.start;
+
                 canvas.fill_rect(
                     Rect::new(
-                        (x as u32 * tile_size + offset) as i32, 
-                        (y as u32 * tile_size + offset) as i32, 
-                        tile_size - offset * 2, 
-                        tile_size - offset * 2)
+                        (x * tile_size as i32 + offset + scope_offset_x) as i32, 
+                        (y * tile_size as i32 + offset + scope_offset_y) as i32, 
+                        tile_size - offset as u32 * 2, 
+                        tile_size - offset as u32 * 2)
                 ).unwrap();
             }
         }
