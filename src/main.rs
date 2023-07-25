@@ -126,8 +126,8 @@ fn main() {
 }
 
 fn count_adjacent(board: Board, x: i32, y: i32) -> i32 {
-    let max_x = (board.width - 1) as i32;
-    let max_y = (board.height - 1) as i32;
+    let max_x = (board.height - 1) as i32;
+    let max_y = (board.width - 1) as i32;
     let mut count: i32 = 0;
 
     if y > 0 {
