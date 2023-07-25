@@ -15,7 +15,7 @@ fn main() {
     
     //replace with array
     let mut board: HashMap<(i32, i32), bool> = HashMap::new();
-    let tile_size: u32 = 20;
+    let tile_size: u32 = 25;
     let mut running = false;
 
     let mut frame_count: u32 = 0;
@@ -131,12 +131,28 @@ fn main() {
         }
 
         //Background
-        canvas.set_draw_color(Color::RGB(30, 30, 30));
+        canvas.set_draw_color(Color::RGB(60, 60, 60));
         canvas.clear();
 
         //Entities
+        let offset: i32 = 1;
+        canvas.set_draw_color(Color::RGB(30, 30, 30));
+        for x in (0..window_width as i32).step_by(tile_size as usize) {
+            for y in (0..window_height as i32).step_by(tile_size as usize) {
+                let scope_offset_x: i32 = -scope.0.start % tile_size as i32;
+                let scope_offset_y: i32 = -scope.1.start % tile_size as i32;
+
+                canvas.fill_rect(
+                    Rect::new(
+                        x as i32 + offset + scope_offset_x, 
+                        y as i32 + offset + scope_offset_y, 
+                        tile_size - offset as u32 * 2, 
+                        tile_size - offset as u32 * 2)
+                ).unwrap();
+            }
+        }
+
         canvas.set_draw_color(Color::RGB(200, 200, 200));
-        let offset = 2;
         for ((x, y), _) in board.clone(){
             if scope.0.contains(&(x * tile_size as i32)) && scope.1.contains(&(y * tile_size as i32)){
                 let scope_offset_x: i32 = -scope.0.start;
@@ -144,8 +160,8 @@ fn main() {
 
                 canvas.fill_rect(
                     Rect::new(
-                        (x * tile_size as i32 + offset + scope_offset_x) as i32, 
-                        (y * tile_size as i32 + offset + scope_offset_y) as i32, 
+                        x * tile_size as i32 + offset + scope_offset_x, 
+                        y * tile_size as i32 + offset + scope_offset_y,
                         tile_size - offset as u32 * 2, 
                         tile_size - offset as u32 * 2)
                 ).unwrap();
