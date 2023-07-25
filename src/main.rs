@@ -72,6 +72,7 @@ fn main() {
         }
 
         //adding cell if left mouse button is hold
+        //TODO: not accurate placement
         if hold_left_mouse_button {
             if running {continue;}
 
