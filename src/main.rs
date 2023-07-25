@@ -7,6 +7,9 @@ fn main() {
     let window_height: u32 = 900;
     let mut scope = (0..window_width as i32, 0..window_height as i32);
     
+    let mut hold_left_mouse_button = false;
+    let mut add_cell = true;
+    
     //replace with array
     let mut board: HashMap<(i32, i32), bool> = HashMap::new();
     let tile_size: u32 = 20;
@@ -55,19 +58,35 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::D), .. } => {
                     scope = ((scope.0.start + tile_size as i32)..(scope.0.end + tile_size as i32), scope.1);
                 },
+                Event::MouseButtonUp { mouse_btn: MouseButton::Left, .. } => {
+                    hold_left_mouse_button = false;
+                },
                 Event::MouseButtonDown { mouse_btn: MouseButton::Left, x, y, .. } => {
-                    if running {continue;}
-
+                    hold_left_mouse_button = true;
                     let i = (x + scope.0.start) / tile_size as i32;
                     let j = (y + scope.1.start) / tile_size as i32;
-                    if board.get(&(i, j)).is_none() {
-                        board.insert((i, j), true);
-                    }
-                    else {
-                        board.remove(&(i, j));
-                    }
-                }
+
+                    add_cell = board.get(&(i, j)).is_none();
+                },
                 _ => {}
+            }
+        }
+
+        //adding cell if left button is hold
+        if hold_left_mouse_button {
+            if running {continue;}
+
+            let x = event_pump.mouse_state().x();
+            let y = event_pump.mouse_state().y();
+
+            let i = (x + scope.0.start) / tile_size as i32;
+            let j = (y + scope.1.start) / tile_size as i32;
+
+            if add_cell {
+                board.insert((i, j), true);
+            }
+            else {
+                board.remove(&(i, j));
             }
         }
 
