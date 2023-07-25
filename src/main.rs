@@ -25,7 +25,7 @@ impl Board {
         return Board {
             width,
             height,
-            value: vec![vec![Cell::new(false); width as usize]; height as usize]
+            value: vec![vec![Cell::new(false); height as usize]; width as usize]
         };
     }
 }
@@ -35,7 +35,7 @@ fn main() {
     let window_height: u32 = 900;
 
     let tile_size: u32 = 20;
-    let mut board: Board = Board::new(window_height / tile_size, window_width / tile_size);
+    let mut board: Board = Board::new(window_width / tile_size, window_height / tile_size);
     let mut running = false;
 
     let mut frame_count = 0;
@@ -125,41 +125,31 @@ fn main() {
     }
 }
 
-fn count_adjacent(board: Board, x: i32, y: i32) -> i32 {
-    let max_x = (board.height - 1) as i32;
-    let max_y = (board.width - 1) as i32;
+fn count_adjacent(board: Board, x0: i32, y0: i32) -> i32 {
+    let max_x = (board.width - 1) as i32;
+    let max_y = (board.height - 1) as i32;
     let mut count: i32 = 0;
 
-    if y > 0 {
-        if x > 0 {
-            if board.value[x as usize - 1][y as usize - 1].alive == true {count += 1;}
-        }
+    for dr in -1..=1 {
+        for dc in -1..=1 {
+            let mut x: i32 = x0 + dr;
+            let mut y: i32 = y0 + dc;
 
-        if board.value[x as usize][y as usize - 1].alive == true {count += 1;}
-        
-        if x < max_x {
-            if board.value[x as usize + 1][y as usize - 1].alive == true {count += 1;}
-        }
-    }
+            if dr == 0 && dc == 0 { continue; }
 
-    if x > 0 {
-        if board.value[x as usize - 1][y as usize].alive == true {count += 1;}
-    }
-    if x < max_x {
-        if board.value[x as usize + 1][y as usize].alive == true {count += 1;}
-    }
+            //wrap out of range indices
+            if x < 0 { x = max_x; }
+            else if x > max_x { x = 0; }
 
-    if y < max_y {
-        if x > 0 {
-            if board.value[x as usize - 1][y as usize + 1].alive == true {count += 1;}
-        }
-        if board.value[x as usize][y as usize + 1].alive == true {count += 1;}
+            if y < 0 { y = max_y; }
+            else if y > max_y { y = 0; }
 
-        if x < max_x {
-            if board.value[x as usize + 1][y as usize + 1].alive == true {count += 1;}
+            if board.value[x as usize][y as usize].alive {
+                count += 1
+            }
         }
     }
-
+    
     return count;
 }
 
