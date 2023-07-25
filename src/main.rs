@@ -6,7 +6,10 @@ fn main() {
     let window_width: u32 = 1600;
     let window_height: u32 = 900;
     let mut scope = (0..window_width as i32, 0..window_height as i32);
-    
+    let mut hold_middle_mouse_button = false;
+    let mut scope_drag_start_x = 0;
+    let mut scope_drag_start_y = 0;
+
     let mut hold_left_mouse_button = false;
     let mut add_cell = true;
     
@@ -46,17 +49,13 @@ fn main() {
                     scope = (0..window_width as i32, 0..window_height as i32);
                     frame_count = 0;
                 },
-                Event::KeyDown { keycode: Some(Keycode::W), .. } => {
-                    scope = (scope.0, (scope.1.start - tile_size as i32)..(scope.1.end - tile_size as i32));
+                Event::MouseButtonUp { mouse_btn: MouseButton::Middle, .. } => {
+                    hold_middle_mouse_button = false;
                 },
-                Event::KeyDown { keycode: Some(Keycode::A), .. } => {
-                    scope = ((scope.0.start - tile_size as i32)..(scope.0.end - tile_size as i32), scope.1);
-                },
-                Event::KeyDown { keycode: Some(Keycode::S), .. } => {
-                    scope = (scope.0, (scope.1.start + tile_size as i32)..(scope.1.end + tile_size as i32));
-                },
-                Event::KeyDown { keycode: Some(Keycode::D), .. } => {
-                    scope = ((scope.0.start + tile_size as i32)..(scope.0.end + tile_size as i32), scope.1);
+                Event::MouseButtonDown { mouse_btn: MouseButton::Middle, x, y, .. } => {
+                    hold_middle_mouse_button = true;
+                    scope_drag_start_x = x;
+                    scope_drag_start_y = y;
                 },
                 Event::MouseButtonUp { mouse_btn: MouseButton::Left, .. } => {
                     hold_left_mouse_button = false;
@@ -72,7 +71,7 @@ fn main() {
             }
         }
 
-        //adding cell if left button is hold
+        //adding cell if left mouse button is hold
         if hold_left_mouse_button {
             if running {continue;}
 
@@ -88,6 +87,19 @@ fn main() {
             else {
                 board.remove(&(i, j));
             }
+        }
+
+        //move scope if middle mouse button is hold
+        if hold_middle_mouse_button {
+            let x = event_pump.mouse_state().x();
+            let y = event_pump.mouse_state().y();
+
+            let dir_x = scope_drag_start_x - x;
+            let dir_y = scope_drag_start_y - y;
+
+            scope = ((scope.0.start + dir_x)..(scope.0.end + dir_x), (scope.1.start + dir_y)..(scope.1.end + dir_y));
+            scope_drag_start_x = x;
+            scope_drag_start_y = y;
         }
 
         //Mechanic
