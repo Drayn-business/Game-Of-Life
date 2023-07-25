@@ -38,7 +38,7 @@ fn main() {
     let mut board: Board = Board::new(window_width / tile_size, window_height / tile_size);
     let mut running = false;
 
-    let mut frame_count = 0;
+    let mut frame_count: u32 = 0;
 
     let context = sdl2::init().unwrap();
     let video_subsystem = context.video().unwrap();
@@ -80,7 +80,7 @@ fn main() {
         }
 
         //Mechanic
-        if running && times_per_second(frame_count, 20) {
+        if running && frames_per_second(frame_count, 20) {
             let board_state = board.clone();
             for (x, column) in board_state.clone().value.iter().enumerate() {
                 for y in 0..column.len(){
@@ -158,6 +158,6 @@ fn count_adjacent(board: Board, x0: i32, y0: i32) -> i32 {
     return count;
 }
 
-fn times_per_second(frame_count: u32, times: u32) -> bool {
-    return frame_count % (60 / times) == 0;
+fn frames_per_second(frame_count: u32, frames: u32) -> bool {
+    return frame_count % (60 / frames) == 0;
 }
