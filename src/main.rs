@@ -1,41 +1,14 @@
-use std::time::Duration;
+use std::{time::Duration, collections::HashMap};
 
 use sdl2::{pixels::Color, event::Event, keyboard::Keycode, rect::Rect, mouse::MouseButton};
-
-#[derive(Clone)]
-struct Cell {
-    alive: bool
-}
-
-impl Cell {
-    fn new(alive: bool) -> Cell {
-        return Cell {alive};
-    }
-}
-
-#[derive(Clone)]
-struct Board {
-    width: u32,
-    height: u32,
-    value: Vec<Vec<Cell>>
-}
-
-impl Board {
-    fn new(width: u32, height: u32) -> Board {
-        return Board {
-            width,
-            height,
-            value: vec![vec![Cell::new(false); height as usize]; width as usize]
-        };
-    }
-}
 
 fn main() {
     let window_width: u32 = 1600;
     let window_height: u32 = 900;
+    let scope = (0..window_width as i32, 0..window_height as i32);
 
     let tile_size: u32 = 20;
-    let mut board: Board = Board::new(window_width / tile_size, window_height / tile_size);
+    let mut board: HashMap<(i32, i32), bool> = HashMap::new();
     let mut running = false;
 
     let mut frame_count: u32 = 0;
@@ -64,41 +37,67 @@ fn main() {
                     running = !running;
                 },
                 Event::KeyDown { keycode: Some(Keycode::R), .. } => {
-                    board.value = vec![vec![Cell::new(false); board.height as usize]; board.width as usize];
+                    board = HashMap::new();
                     running = false;
                     frame_count = 0;
                 },
                 Event::MouseButtonDown { mouse_btn: MouseButton::Left, x, y, .. } => {
                     if running {continue;}
 
-                    let i = (x / tile_size as i32) as usize;
-                    let j = (y / tile_size as i32) as usize;
-                    board.value[i][j].alive = !board.value[i][j].alive;
+                    let i = x / tile_size as i32;
+                    let j = y / tile_size as i32;
+                    if board.get(&(i, j)).is_none() {
+                        board.insert((i, j), true);
+                    }
+                    else {
+                        board.remove(&(i, j));
+                    }
                 },
                 _ => {}
             }
         }
 
         //Mechanic
-        if running && frames_per_second(frame_count, 20) {
+        if running && frames_per_second(frame_count, 2) {
             let board_state = board.clone();
-            for (x, column) in board_state.clone().value.iter().enumerate() {
-                for y in 0..column.len(){
-                    let adjacent = count_adjacent(board_state.clone(), x as i32, y as i32);
+            for ((x, y), _) in board_state.clone() {
+                for dr in -1..=1 {
+                    for dc in -1..=1 {
+                        let i = x + dr;
+                        let j = y + dc;
 
-                    if board_state.value[x][y].alive && adjacent < 2 {
-                        board.value[x][y].alive = false;
-                    }
-                    else if board_state.value[x][y].alive && ((2..=3).contains(&adjacent)){
-                        continue;
-                    }
-                    else if board_state.value[x][y].alive && adjacent > 2 {
-                        board.value[x][y].alive = false;
-                    }
-                    else if !board_state.value[x][y].alive && adjacent == 3 {
-                        board.value[x][y].alive = true;
+                        let adjacent = count_adjacent(board_state.clone(), i, j);
+
+                        if board_state.get(&(i, j)).is_some() && adjacent < 2 {
+                            board.remove(&(i, j));
+                        }
+                        else if board_state.get(&(i, j)).is_some() && ((2..=3).contains(&adjacent)){
+                            continue;
+                        }
+                        else if board_state.get(&(i, j)).is_some() && adjacent > 2 {
+                            board.remove(&(i, j));
+                        }
+                        else if board_state.get(&(i, j)).is_none() && adjacent == 3 {
+                            board.insert((i, j), true);
+                        }
                     }
                 }
+
+                //doesn't count for not existing cells
+                let adjacent = count_adjacent(board_state.clone(), x, y);
+
+                    if board_state.get(&(x, y)).is_some() && adjacent < 2 {
+                        board.remove(&(x, y));
+                    }
+                    else if board_state.get(&(x, y)).is_some() && ((2..=3).contains(&adjacent)){
+                        continue;
+                    }
+                    else if board_state.get(&(x, y)).is_some() && adjacent > 2 {
+                        board.remove(&(x, y));
+                    }
+                    else if board_state.get(&(x, y)).is_none() && adjacent == 3 {
+                        board.insert((x, y), true);
+                    }
             }
         }
 
@@ -109,17 +108,15 @@ fn main() {
         //Entities
         canvas.set_draw_color(Color::RGB(200, 200, 200));
         let offset: u32 = 2;
-        for (x, column) in board.value.iter().enumerate() {
-            for (y, tile) in column.iter().enumerate(){
-                if (*tile).alive {
-                    canvas.fill_rect(
-                        Rect::new(
-                            (x as u32 * tile_size + offset) as i32, 
-                            (y as u32 * tile_size + offset) as i32, 
-                            tile_size - offset * 2, 
-                            tile_size - offset * 2)
-                    ).unwrap();
-                }
+        for ((x, y), _) in board.clone(){
+            if scope.0.contains(&x) && scope.1.contains(&y){
+                canvas.fill_rect(
+                    Rect::new(
+                        (x as u32 * tile_size + offset) as i32, 
+                        (y as u32 * tile_size + offset) as i32, 
+                        tile_size - offset * 2, 
+                        tile_size - offset * 2)
+                ).unwrap();
             }
         }
         
@@ -130,31 +127,19 @@ fn main() {
     }
 }
 
-fn count_adjacent(board: Board, x0: i32, y0: i32) -> i32 {
-    let max_x = (board.width - 1) as i32;
-    let max_y = (board.height - 1) as i32;
+fn count_adjacent(board: HashMap<(i32, i32), bool>, x0: i32, y0: i32) -> i32 {
     let mut count: i32 = 0;
 
     for dr in -1..=1 {
         for dc in -1..=1 {
-            let mut x: i32 = x0 + dr;
-            let mut y: i32 = y0 + dc;
-
             if dr == 0 && dc == 0 { continue; }
 
-            //wrap out of range indices
-            if x < 0 { x = max_x; }
-            else if x > max_x { x = 0; }
-
-            if y < 0 { y = max_y; }
-            else if y > max_y { y = 0; }
-
-            if board.value[x as usize][y as usize].alive {
+            if board.get(&(x0 + dr, y0 + dc)).is_some() {
                 count += 1
             }
         }
     }
-    
+
     return count;
 }
 
