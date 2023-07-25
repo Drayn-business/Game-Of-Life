@@ -15,6 +15,7 @@ fn main() {
     
     //replace with array
     let mut board: HashMap<(i32, i32), bool> = HashMap::new();
+    //TODO: add zoom
     let tile_size: u32 = 25;
     let mut running = false;
 
