@@ -138,6 +138,8 @@ fn main() {
 
         //Entities
         let offset: i32 = 1;
+
+        //TODO: generate full board
         canvas.set_draw_color(Color::RGB(30, 30, 30));
         for x in (0..window_width as i32).step_by(tile_size as usize) {
             for y in (0..window_height as i32).step_by(tile_size as usize) {
