@@ -63,6 +63,11 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::Space), .. } => {
                     running = !running;
                 },
+                Event::KeyDown { keycode: Some(Keycode::R), .. } => {
+                    board.value = vec![vec![Cell::new(false); board.height as usize]; board.width as usize];
+                    running = false;
+                    frame_count = 0;
+                },
                 Event::MouseButtonDown { mouse_btn: MouseButton::Left, x, y, .. } => {
                     if running {continue;}
 
@@ -75,7 +80,7 @@ fn main() {
         }
 
         //Mechanic
-        if running && times_per_second(frame_count, 10) {
+        if running && times_per_second(frame_count, 20) {
             let board_state = board.clone();
             for (x, column) in board_state.clone().value.iter().enumerate() {
                 for y in 0..column.len(){
