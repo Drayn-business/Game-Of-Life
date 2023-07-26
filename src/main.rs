@@ -1,6 +1,6 @@
 use std::{time::Duration, collections::HashMap};
 
-use sdl2::{pixels::Color, event::Event, keyboard::Keycode, rect::Rect, mouse::MouseButton};
+use sdl2::{pixels::Color, event::Event, keyboard::Keycode, rect::Rect, mouse::{MouseButton, MouseWheelDirection}};
 
 fn main() {
     let window_width: u32 = 1600;
@@ -13,10 +13,9 @@ fn main() {
     let mut hold_left_mouse_button = false;
     let mut add_cell = true;
     
-    //replace with array
+    //TODO: replace with array
     let mut board: HashMap<(i32, i32), bool> = HashMap::new();
-    //TODO: add zoom
-    let tile_size: u32 = 25;
+    let mut tile_size: u32 = 25;
     let mut running = false;
 
     let mut frame_count: u32 = 0;
@@ -47,9 +46,18 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::R), .. } => {
                     board = HashMap::new();
                     running = false;
+                    tile_size = 25;
                     scope = (0..window_width as i32, 0..window_height as i32);
                     frame_count = 0;
                 },
+                Event::MouseWheel { direction: MouseWheelDirection::Normal , y, ..} => {
+                    if y == 1 && tile_size < 100 {
+                        tile_size += 2;
+                    }
+                    else if y == -1 && tile_size > 5{
+                        tile_size -= 2;
+                    }
+                }
                 Event::MouseButtonUp { mouse_btn: MouseButton::Middle, .. } => {
                     hold_middle_mouse_button = false;
                 },
@@ -105,6 +113,7 @@ fn main() {
         }
 
         //Mechanic
+        //TODO: add speed changer
         if running && frames_per_second(frame_count, 10) {
             let board_state = board.clone();
             for ((x, y), _) in board_state.clone() {
@@ -156,6 +165,7 @@ fn main() {
             }
         }
 
+        //TODO: remove cutting off
         canvas.set_draw_color(Color::RGB(200, 200, 200));
         for ((x, y), _) in board.clone(){
             if scope.0.contains(&(x * tile_size as i32)) && scope.1.contains(&(y * tile_size as i32)){
