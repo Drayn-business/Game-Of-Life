@@ -155,12 +155,13 @@ fn main() {
                 let scope_offset_x: i32 = -scope.0.start % tile_size as i32;
                 let scope_offset_y: i32 = -scope.1.start % tile_size as i32;
 
+                let pos_x = x + offset + scope_offset_x;
+                let pos_y = y + offset + scope_offset_y;
+                let width = tile_size - offset as u32 * 2;
+                let height = tile_size - offset as u32 * 2;
+
                 canvas.fill_rect(
-                    Rect::new(
-                        x as i32 + offset + scope_offset_x, 
-                        y as i32 + offset + scope_offset_y, 
-                        tile_size - offset as u32 * 2, 
-                        tile_size - offset as u32 * 2)
+                    Rect::new(pos_x, pos_y, width, height)
                 ).unwrap();
             }
         }
